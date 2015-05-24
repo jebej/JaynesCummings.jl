@@ -1,7 +1,10 @@
 print("##############################################\n")
 print("JaynesCummings.jl Benchmarks - Single Threaded\n")
 print("Date: ", strftime(time()), "\n")
+print("Revision:\n")
+run(`git rev-parse HEAD`)
 print("##############################################\n\n")
+
 versioninfo()
 print("\n\n")
 
