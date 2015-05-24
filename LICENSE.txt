@@ -1,4 +1,5 @@
-The JanyesCummings.jl package is licensed under the MIT license reproduced below. If you use it, I would appreciate if you mentioned me.
+The JaynesCummings.jl package is licensed under the MIT license reproduced
+below. If you use it, I would appreciate if you mentioned me.
 
 The MIT License (MIT)
 

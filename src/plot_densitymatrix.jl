@@ -1,4 +1,18 @@
+using PyCall
+
 function plot_densitymatrix(densityMat)
+  pygui(false)
+  @pyimport seaborn as sns
+  PyPlot.svg(true)
+
+  sns.set(context="paper", font="monospace")
+
+  f, axs = plt.subplots(2,figsize=(12, 9))
+  sns.heatmap(real(densityMat), square=true, ax=axs[1])
+  sns.heatmap(imag(densityMat), square=true, ax=axs[2])
+end
+
+function plot_densitymatrixOLD(densityMat)
   pygui(false)
   n = size(densityMat,1)
   x = zeros(n,n) # x represents the rows
@@ -14,3 +28,4 @@ function plot_densitymatrix(densityMat)
   subplot(111, projection="3d")
   bar3D(vec(x),vec(x'),vec(zeros(n,n)),1,1,abs(vec(densityMat)))
 end
+

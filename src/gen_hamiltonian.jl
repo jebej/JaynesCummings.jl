@@ -7,7 +7,7 @@ function gen_hamiltonian(omegaQ,omegaR,g,cutoffN,noiseAdded)
   # Some constant parameters for the Jaynes-Cummings
   identity = [1 0 ; 0 1]; sigmaZ = [1 0 ; 0 -1];
   sigmaMinus = [0 1 ; 0 0]; sigmaPlus = [0 0 ; 1 0];
-  hBar = 1; # 1.05457173E-34; # in Joules*seconds
+  global h_bar
 
   # The Jaynes-Cummings Hamiltonian is written with the following
   # conventions: omegaR is the resonator frequency, omegaQ is the qubit
@@ -16,13 +16,13 @@ function gen_hamiltonian(omegaQ,omegaR,g,cutoffN,noiseAdded)
   # [1;0] (hence the minus sign before sigmaZ).
   jaynesCummings = zeros(Complex128,2*cutoffN,2*cutoffN)
   jaynesCummings = jaynesCummings +
-    hBar * omegaR .* kron(identity,a_dagger(cutoffN)) * kron(identity,a(cutoffN)) -  # harmonic oscillator term
-    0.5 .* hBar .* omegaQ .* kron(sigmaZ,eye(cutoffN)) +  # qubit term
-    hBar .* g .* ( kron(sigmaPlus,a(cutoffN)) + kron(sigmaMinus,a_dagger(cutoffN)) ); # interaction term
+    h_bar * omegaR .* kron(identity,a_dagger(cutoffN)) * kron(identity,a(cutoffN)) -  # harmonic oscillator term
+    0.5 .* h_bar .* omegaQ .* kron(sigmaZ,eye(cutoffN)) +  # qubit term
+    h_bar .* g .* ( kron(sigmaPlus,a(cutoffN)) + kron(sigmaMinus,a_dagger(cutoffN)) ); # interaction term
 
   if noiseAdded==1
     randM = rand(2*cutoffN);
-    randomness = 0.005*hBar*g*(randM+randM');
+    randomness = 0.005*h_bar*g*(randM+randM');
     jaynesCummings = jaynesCummings + randomness;
   end
   return jaynesCummings

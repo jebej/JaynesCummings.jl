@@ -1,8 +1,10 @@
 module JaynesCummings
 using LsqFit, PyPlot
 
+global const h_bar = 1.05457173E-34 # in Joules*seconds
 
-export gen_initialstate, gen_hamiltonian, gen_displacementop, calc_qubittimeevo, calc_photonnumbers,
+export gen_initialstate, gen_hamiltonian, gen_displacementop, gen_timeevoarray,
+       calc_qubittimeevo, calc_photonnumbers,
        partialtrace, a, a_dagger, vonNeumann,
        calc_densitymatrix_resonator, plot_densitymatrix,
        calc_wignerfunction_resonator, plot_wignerfunction
@@ -10,6 +12,8 @@ export gen_initialstate, gen_hamiltonian, gen_displacementop, calc_qubittimeevo,
 
 include("gen_initialstate.jl")
 include("gen_hamiltonian.jl")
+include("gen_displacementop.jl")
+include("gen_timeevoarray.jl")
 include("calc_qubittimeevo.jl")
 include("calc_photonnumbers.jl")
 include("calc_densitymatrix_resonator.jl")
@@ -17,7 +21,6 @@ include("plot_densitymatrix.jl")
 include("gen_hamiltonian.jl")
 include("vonNeumann.jl")
 include("partialtrace.jl")
-include("gen_displacementop.jl")
 include("calc_wignerfunction_resonator.jl")
 include("plot_wignerfunction.jl")
 
