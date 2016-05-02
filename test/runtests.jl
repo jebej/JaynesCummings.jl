@@ -1,6 +1,6 @@
 using JaynesCummings
 using Base.Test
-const TOL = 1E-12
+const TOL = 5E-11
 cutoffN = 12
 qubit_freq = 2*pi*6.57E9
 resonator_freq = qubit_freq

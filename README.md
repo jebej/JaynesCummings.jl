@@ -8,6 +8,6 @@ Jaynes-Cummings.jl is currently a work-in-progress side project and is not meant
 # TODO
 1. Write tests and benchmarks to track progress
 1. Implement parallel processing
-1. Find a single package to plot everything (will probably end up being MATLAB, sorry.)
+1. Find a single package to plot everything
 1. Replace time evolution with legit master equation, taking into account dephasing / relaxation
 1. Full system tomography
