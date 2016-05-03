@@ -29,3 +29,6 @@ photons = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq)
 
 densitymatrix = calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
 @test maximum(abs(densitymatrix - good_densitymatrix)) < TOL
+
+print("Tests passed, now benchmarking...\n\n")
+include("perf/bench.jl")
