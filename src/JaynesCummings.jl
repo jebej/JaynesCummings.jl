@@ -1,5 +1,5 @@
 module JaynesCummings
-using LsqFit, PlotlyJS
+using LsqFit#, PlotlyJS
 
 global const h_bar = 1.05457173E-34 # in Joules*seconds
 
@@ -11,7 +11,7 @@ partialtrace, a, a_dagger
 
 include("generation.jl")
 include("calculation.jl")
-include("plotting.jl")
+#include("plotting.jl")
 
 function partialtrace(rho,dimOfSubsystemToKeep)
     # First check if the density matrix is Hermitian

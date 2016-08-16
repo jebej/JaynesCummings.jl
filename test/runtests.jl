@@ -11,7 +11,7 @@ samples = 300
 include("comparison.jl")
 
 # Test state generation
-initialstate = gen_initialstate(cutoffN,"|g,0>","0.707106781+0.907106781im|g,3>","1.6025403-0.5im|g,4>","-1.6|g,6>")
+initialstate = gen_initialstate(cutoffN,["|g,0>","0.707106781+0.907106781im|g,3>","1.6025403-0.5im|g,4>","-1.6|g,6>"])
 @test initialstate == good_initialstate
 
 hamiltonian = gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN,0)
@@ -30,5 +30,6 @@ photons = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq)
 densitymatrix = calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
 @test maximum(abs(densitymatrix - good_densitymatrix)) < TOL
 
-print("Tests passed, now benchmarking...\n\n")
-include("perf/bench.jl")
+println("Tests passed.")
+#println("Now benchmarking...")
+#include("perf/bench.jl")

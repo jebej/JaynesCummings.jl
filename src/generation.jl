@@ -1,10 +1,9 @@
-function gen_initialstate(cutoffN,x...)
+function gen_initialstate(cutoffN,x)
 
     ketCoeff = zeros(Complex128,length(x),1)
     parameterArray = zeros(Int64,length(x),2)
 
-    for i = 1:length(x)
-        str = x[i]
+    for (i,str) in enumerate(x)
         # Grabbing the coefficient in front of ket
         coeff = str[1:search(str,'|')-1]
         if isempty(coeff)
