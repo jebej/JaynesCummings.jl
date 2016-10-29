@@ -48,11 +48,11 @@ function printreport(io::IO, results)
     ## Version Info
     #### Module Commit ID
     ```
-    $(chomp(readall(`git rev-parse HEAD`)))
+    $(chomp(readstring(`git rev-parse HEAD`)))
     ```
     #### Julia Version
     ```
-    $(first(split(chomp(readall(`julia -e 'versioninfo(true)'`)), "Environment")))
+    $(first(split(chomp(readstring(`julia -e 'versioninfo(true)'`)), "Environment")))
     ```
     """)
 end

@@ -11,16 +11,19 @@ function calc_qubittimeevo(initialstate,time_evo_array)
 end
 
 
-function calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
-    # Defining the function to fit (resonator state only)
-    fun = "qubitModel(x, p) = 0.5*(1"
-    for i=(1:cutoffN).-1
-        fun = string(fun,"-p[$(i+1)]*cos($(sqrt(i)*(2*coupling_freq))*x)")
+function excited_model(x,p,cutoffN,coupling_freq)
+    # Fit function (resonator state only)
+    a = zeros(Float64,length(x))
+    for n=(1:cutoffN)
+        a += p[n]*cos(2*sqrt(n-1)*coupling_freq*x)
     end
-    fun = string(fun,')')
-    eval(parse(fun))
+    return 0.5*(1.0-a)
+end
 
-    fit = curve_fit(qubitModel, time_vec, excited_prob, ones(Float64,cutoffN)*0.1)
+
+function calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
+    fun = (x,p)->excited_model(x,p,cutoffN,coupling_freq)
+    fit = curve_fit(fun,time_vec,excited_prob,ones(Float64,cutoffN)*0.1)
     return fit.param
 end
 

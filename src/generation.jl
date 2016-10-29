@@ -1,11 +1,13 @@
-function gen_initialstate(cutoffN,x)
+function gen_initialstate(cutoffN::Integer,x::Array{String})
 
     ketCoeff = zeros(Complex128,length(x),1)
-    parameterArray = zeros(Int64,length(x),2)
+    parameterArray = zeros(Int,length(x),2)
 
     for (i,str) in enumerate(x)
+        # First we find where the ket starts
+        ketstart = search(str,'|')
         # Grabbing the coefficient in front of ket
-        coeff = str[1:search(str,'|')-1]
+        coeff = str[1:ketstart-1]
         if isempty(coeff)
             ketCoeff[i] = 1
         elseif coeff == '-'
@@ -13,18 +15,16 @@ function gen_initialstate(cutoffN,x)
         else
             ketCoeff[i] = eval(parse(coeff))
         end
-
         # Grabbig qubit state
-        if str[search(str,'|')+1] == 'g'
+        if str[ketstart+1] == 'g'
             parameterArray[i,1] = 0
-        elseif str[search(str,'|')+1] == 'e'
+        elseif str[ketstart+1] == 'e'
             parameterArray[i,1] = 1
         else
             error("Error, qubit state should be 'g' or 'e'")
         end
-
         # Grabbing resonator state
-        parameterArray[i,2] = eval(parse(str[search(str,',')+1:end-1]))
+        parameterArray[i,2] = parse(Int,str[ketstart+3:end-1])
     end
 
     # Making sure that cutoffN is large enough
@@ -32,8 +32,7 @@ function gen_initialstate(cutoffN,x)
         error("The size of the resonator space (cutoffN) must be at least the size of the larger number state plus one (due to zero state)!")
     end
 
-    # Assembling the state matrix
-
+    # Assembling the state density matrix
     state = zeros(Complex128,2*cutoffN,2*cutoffN)
 
     for i = 1:length(x)
