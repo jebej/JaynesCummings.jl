@@ -1,5 +1,4 @@
-import JaynesCummings
-const jc = JaynesCummings
+using JaynesCummings
 
 cutoffN = 12  #cutoffN should be at least max(n)+1; where max(n) is the highest resonator initial state
 qubit_freq = 2*pi*6.57E9
@@ -13,26 +12,22 @@ ket = ["|g,1>","1im|g,3>"]
 
 
 # Generate the initial state and the hamiltonian
-initialstate = jc.gen_initialstate(cutoffN,ket)
-hamiltonian = jc.gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN,0)
-time_vec, time_evo_array = jc.gen_timeevoarray(hamiltonian,finalTime,samples)
+initialstate = gen_initialstate(cutoffN,ket)
+hamiltonian = gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN,0)
+time_vec, time_evo_array = gen_timeevoarray(hamiltonian,finalTime,samples)
 
 # Calculate the excited probability of the qubit as a function of time
-excited_prob = jc.calc_qubittimeevo(initialstate,time_evo_array)
-p1 = jc.plot_qubittimeevo(time_vec,excited_prob)
-display(p1)
+excited_prob = calc_qubittimeevo(initialstate,time_evo_array)
+plot_qubittimeevo(time_vec,excited_prob)
 
 # Calculate the photon numbers in the resonator
-photons = jc.calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
-p2 = jc.plot_photonnumbers(photons)
-#display(p2)
+photons = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
+plot_photonnumbers(photons)
 
 # Calculate the density matrix by repeating the above while displacing the resonator
-#densitymatrix =  jc.calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
-#p3 = jc.plot_densitymatrix(densitymatrix)
-#display(p3)
+densitymatrix =  calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
+plot_densitymatrix(densitymatrix)
 
 # Calculate the Wigner function
-#wignerfunction = jc.calc_wignerfunction_resonator(cutoffN,wigner_samples,coupling_freq,initialstate,time_vec,time_evo_array)
-#p4 = jc.plot_wignerfunction(wignerfunction)
-#display(p4)
+wignerfunction = calc_wignerfunction_resonator(cutoffN,wigner_samples,coupling_freq,initialstate,time_vec,time_evo_array)
+plot_wignerfunction(wignerfunction)

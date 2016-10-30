@@ -1,9 +1,9 @@
 function plot_qubittimeevo(time_vec,excited_prob)
-    p = scatter(;x=time_vec,y=excited_prob,mode="line")
+    p = scatter(;x=time_vec/1E9,y=excited_prob,mode="line")
 
     l = Layout(;title="Qubit Excited State Probability",
-    xaxis=attr(title="Time (sec)", showgrid=false, zeroline=false),
-    yaxis=attr(title="Probability"))
+    xaxis=attr(title="Interaction Time (ns)", showgrid=false, zeroline=false),
+    yaxis=attr(title="Excited Probability"))
 
     plot(p,l)
 end
@@ -35,9 +35,6 @@ function plot_densitymatrix(densitymatrix)
     colorscale="Viridis")
 
     l = Layout(;title="Magnitude of Density Matrix Elements |ρ_{mn}|",
-    width=750,
-    height=600,
-    autosize=false,
     xaxis_title="n",
     xaxis_ticktext=kets,
     xaxis_tickvals=kets,
@@ -57,10 +54,7 @@ function plot_wignerfunction(matrix)
     zsmooth="best",
     colorscale="Viridis")
 
-    l = Layout(;title="Wigner Function",
-    width=750,
-    height=600,
-    autosize=false)
+    l = Layout(;title="Wigner Function")
 
     plot(p,l)
 end
