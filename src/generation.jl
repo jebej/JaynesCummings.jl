@@ -61,31 +61,30 @@ function gen_initialstate(cutoffN::Integer,x::Array{String})
 end
 
 
-function gen_hamiltonian(omegaQ,omegaR,g,cutoffN,noiseAdded)
+function gen_hamiltonian(ω_q,ω_r,g,cutoffN,noiseAdded)
     # This function generates a times invariant matrix for the Jaynes-Cummings
-    # Hamiltonian. The parameters omegaR, omegaQ and g should be given in
+    # Hamiltonian. The parameters ω_r, ω_q and g should be given in
     # rad/s. The cutoffN parameter is the highest energy level of the harmonic
     # oscillator that is considered. Higher levels are truncated.
 
-    # Some constant parameters for the Jaynes-Cummings
-    identity = [1 0 ; 0 1]; sigmaZ = [1 0 ; 0 -1];
-    sigmaMinus = [0 1 ; 0 0]; sigmaPlus = [0 0 ; 1 0];
-
     # The Jaynes-Cummings Hamiltonian is written with the following
-    # conventions: omegaR is the resonator frequency, omegaQ is the qubit
+    # conventions: ω_r is the resonator frequency, ω_q is the qubit
     # frequency and g is the coupling. The resonator Hilbert space is truncated
     # to n = cutoffN, and the ground state of the qubit is given by the vector
-    # [1;0] (hence the minus sign before sigmaZ).
-    jaynesCummings = zeros(Complex128,2*cutoffN,2*cutoffN)
-    jaynesCummings = jaynesCummings +
-    h_bar * omegaR .* kron(identity,a_dagger(cutoffN)) * kron(identity,a(cutoffN)) -  # harmonic oscillator term
-    0.5 .* h_bar .* omegaQ .* kron(sigmaZ,eye(cutoffN)) +  # qubit term
-    h_bar .* g .* ( kron(sigmaPlus,a(cutoffN)) + kron(sigmaMinus,a_dagger(cutoffN)) ); # interaction term
+    # [1;0] (hence the minus sign before σ_z).
+    jaynesCummings = Array{Complex128}(2*cutoffN,2*cutoffN)
+    jaynesCummings =
+    # harmonic oscillator term
+    ħ * ω_r .* kron(identity,a_dagger(cutoffN)) * kron(identity,a(cutoffN)) -
+    # qubit term
+    0.5 .* ħ .* ω_q .* kron(σ_z,eye(cutoffN)) +
+    # interaction term
+    ħ .* g .* ( kron(σ_plus,a(cutoffN)) + kron(σ_minus,a_dagger(cutoffN)) )
 
     if noiseAdded==1
-        randM = rand(2*cutoffN);
-        randomness = 0.005*h_bar*g*(randM+randM');
-        jaynesCummings = jaynesCummings + randomness;
+        randM = rand(2*cutoffN)
+        randomness = 0.005*ħ*g*(randM+randM')
+        jaynesCummings = jaynesCummings + randomness
     end
     return jaynesCummings
 end
@@ -97,7 +96,7 @@ function gen_timeevoarray(hamiltonian,finalTime,samples)
     time_evo_array = Array(typeof(hamiltonian),samples)
 
     for i=1:samples
-        time_evo_array[i] = expm(-1im .* hamiltonian .* time_vec[i] / h_bar)
+        time_evo_array[i] = expm(-1.0im .* hamiltonian .* time_vec[i] / ħ)
     end
 
     return time_vec, time_evo_array
@@ -109,4 +108,22 @@ function gen_displacementop(alpha,cutoffN)
     # (only displaces the resonator, the identity is tensored in for the
     # qubit).
     expm( alpha .* a_dagger(cutoffN) - alpha' .* a(cutoffN) )
+end
+
+
+function a(cutoffN) # Truncated matrix for the lowering operator
+    out = zeros(Complex128,cutoffN,cutoffN)
+    for i = 1:cutoffN-1
+        out[i,i+1] = sqrt(i)
+    end
+    return out
+end
+
+
+function a_dagger(cutoffN) # Truncated matrix for the raising operator
+    out = zeros(Complex128,cutoffN,cutoffN)
+    for i = 1:cutoffN-1
+        out[i+1,i] = sqrt(i)
+    end
+    return out
 end

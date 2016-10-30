@@ -1,12 +1,71 @@
-function calc_qubittimeevo(initialstate,time_evo_array)
-    excited_prob = zeros(Complex128,length(time_evo_array))
+import Base.reverse
+reverse(n::Number) = n
 
+"""
+    partialtrace(ρ,dims,sys)
+
+Compute the partial trace of a matrix ρ with subsystems dimensions specified in
+the vector sys_dims (e.g.: [dimA dimB...]) by tracing out the subsystems given
+in the vector sys (e.g.: [2 3]).
+
+Function adapted from a MATLAB function by Toby Cubitt available here:
+http://www.dr-qubit.org/Matlab_code.html
+
+# Arguments
+* `ρ::Matrix`: matrix
+* `dims::Vector{Int}`: vector specifying the dimensions of the subsystems
+  that the full matrix contains. A qubit and resonator state (with the Fock
+  space truncated to 6) would have sys_dim = [2 6].
+* `sys::Union{Vector{Int},Int}`: vector (or single value) specifying the indices
+  of the subsystems to trace out.
+
+# Examples
+```jldoctest
+julia> ρ = [0.5 0 0 0.5; 0 0 0 0; 0 0 0 0; 0.5 0 0 0.5]
+julia> dims = [2;2] # two qubits
+julia> sys = 1 # trace out the first qubit
+julia> partialtrace(ρ,dims,sys)
+2×2 Array{Float64,2}:
+ 0.5  0.0
+ 0.0  0.5
+```
+"""
+function partialtrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
+    # Make sure the input arguments make sense
+    if max(sys) > length(dims)
+        error("You have given a system index too high for the dimensions specified in `dims`")
+    end
+    if prod(dims) != size(ρ,1)
+        error("The subsystem dimensions given in `dims` are not consistent with those of the matrix")
+    end
+    # First, calculate systems, dimensions, etc.
+    n = length(dims)
+    rdims = reverse(dims)
+    keep = 1:n
+    flag = trues(size(keep))
+    flag[sys] = false
+    keep = keep[flag]
+    dimstrace = prod(dims[sys])
+    dimskeep = div(size(ρ,1),dimstrace)
+    # Reshape density matrix into tensor with one row and one column index
+    # for each subsystem, permute traced subsystem indices to the end,
+    # reshape again so that first two indices are row and column
+    # multi-indices for kept subsystems and third index is a flattened index
+    # for traced subsystems, then sum third index over "diagonal" entries
+    perm = n+1-[reverse(keep);reverse(keep)-n;sys;sys-n]
+    x = reshape(permutedims(reshape(ρ,[rdims;rdims]...),perm),dimskeep,dimskeep,dimstrace^2)
+    return sum(x[:,:,1:dimstrace+1:dimstrace^2],3)[:,:,1]
+end
+
+
+function calc_qubittimeevo(state,time_evo_array)
+    excited_prob = zeros(Float64,length(time_evo_array))
+    cutoffN = div(size(state,1),2)
     # Time evolve the system density matrix and "measure" the qubit at each time sample taken. This is done by
     # tracing out the resonator and keeping the excited state entry of the density matrix (ie, entry 2,2 in the matrix)
     for i=1:length(time_evo_array)
-        excited_prob[i] = partialtrace(time_evo_array[i] * initialstate * time_evo_array[i]',2)[2,2]
+        excited_prob[i] = real(partialtrace(time_evo_array[i] * state * time_evo_array[i]',[2;cutoffN],2)[2,2])
     end
-
     return excited_prob
 end
 
@@ -40,7 +99,7 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
         # For each angle/displaced state, we first find the photon number distribution
         # Generating the displacement operator for angle m
         displacement_operator = gen_displacementop(alpha[m],cutoffN)
-        sys_displacement = (kron(eye(2),displacement_operator))
+        sys_displacement = (kron(identity,displacement_operator))
         excited_prob = calc_qubittimeevo(sys_displacement'*initialstate*sys_displacement,time_evo_array)
         # Solving for the displaced state photon number distributions
         photon_numbers[m,:] = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq)
@@ -72,7 +131,7 @@ function calc_wignerfunction_resonator(cutoffN,wignerSamples,coupling_freq,initi
     #
     for realIndex=1:wignerSamples
         for imagIndex=1:wignerSamples
-            displacement_operator = kron(eye(2),gen_displacementop((realIndex-wignerSamples/2)/10 + 1im*(imagIndex-wignerSamples/2)/10,cutoffN)) # generating the displacement operator for angle m
+            displacement_operator = kron(identity,gen_displacementop((realIndex-wignerSamples/2)/10 + 1im*(imagIndex-wignerSamples/2)/10,cutoffN)) # generating the displacement operator for angle m
             # For each displaced state, we first find the photon number distribution
             excited_prob = calc_qubittimeevo(displacement_operator'*initialstate*displacement_operator,time_evo_array)
             photon_numbers = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq) # solving for the displaced state photon number distributions
@@ -101,4 +160,25 @@ function cal_densitymatrix_qubit(xup,yup,zup)
     b = magb * (cosϕ + 1im * sinϕ)
 
     return a, b
+end
+
+
+function partialtrace_old(rho,dimOfSubsystemToKeep)
+    # First check if the density matrix is Hermitian
+    if maximum(abs(rho'-rho))>8E-15
+        error("This density matrix is not Hermitian!")
+    end
+
+    dimOfSubsystemToTraceOut = div(size(rho)[1] , dimOfSubsystemToKeep)
+
+    matrix = zeros(Complex128,dimOfSubsystemToKeep,dimOfSubsystemToKeep)
+
+    for i=1:dimOfSubsystemToTraceOut
+        vector = zeros(Complex128,dimOfSubsystemToTraceOut)
+        vector[i] = (1.0+1.0im)/sqrt(2)
+        fullVector = kron(eye(dimOfSubsystemToKeep),vector)
+        matrix = matrix + fullVector' * rho * fullVector
+    end
+
+    return matrix
 end
