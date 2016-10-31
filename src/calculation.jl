@@ -9,7 +9,7 @@ the vector sys_dims (e.g.: [dimA dimB...]) by tracing out the subsystems given
 in the vector sys (e.g.: [2 3]).
 
 Function adapted from a MATLAB function by Toby Cubitt available here:
-http://www.dr-qubit.org/Matlab_code.html
+http://www.dr-qubit.org/Matlab_code.html and licensed under GPL2.
 
 # Arguments
 * `ρ::Matrix`: matrix
@@ -86,41 +86,38 @@ function calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
     return fit.param
 end
 
+import Base.+
++(a::Tuple{Array{Float64,2},Array{Complex128,2}},b::Tuple{Array{Float64,2},Array{Complex128,2}})=(a[1]+b[1],a[2]+b[2])
 
 function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
     # Solving for the density matrix from photon number distributions
-    theta=0:pi/cutoffN:2*pi-pi/cutoffN # we need 2*cutoffN displacements to get enough linearly independent equations
-    alpha=1*(cos(theta) + 1im*sin(theta)) # calculating the alpha values for 2*cutoffN displacements from a circle of unit radius
-
-    photon_numbers=zeros(Float64,length(theta),cutoffN)
-
-    M=zeros(Complex128,length(theta)*cutoffN,cutoffN^2)
-    for m=1:length(theta)
+    # We need 2*cutoffN displacements to get enough linearly independent
+    # equations. We sample the alpha values from a circle of unit radius.
+    α=[1.0*(cos(θ) + 1.0im*sin(θ)) for θ in 0:π/cutoffN:2π-π/cutoffN]
+    # Do the math
+    res = map(α) do α
         # For each angle/displaced state, we first find the photon number distribution
         # Generating the displacement operator for angle m
-        displacement_operator = gen_displacementop(alpha[m],cutoffN)
-        sys_displacement = (kron(identity,displacement_operator))
-        excited_prob = calc_qubittimeevo(sys_displacement'*initialstate*sys_displacement,time_evo_array)
+        Dα = kron(identity,gen_displacementop(α,cutoffN))
+        excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
         # Solving for the displaced state photon number distributions
-        photon_numbers[m,:] = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq)
-        # display(m/length(theta)) # very basic "progress bar"
+        photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
         # We then calculate the displacement operator matrix elements
-        for n=1:cutoffN
-            for i=1:cutoffN
-                for j=1:cutoffN
-                    # Generating the displacement operator matrix elements
-                    M[(m-1)*cutoffN+n,(i-1)*cutoffN+j] = convert(Complex128,(displacement_operator'[n,i] * displacement_operator[j,n]))
-                end
-            end
+        M = Array{Complex128}(cutoffN,cutoffN^2)
+        for n=1:cutoffN, i=1:cutoffN, j=1:cutoffN
+            # Generating the displacement operator matrix elements
+            M[n,(i-1)*cutoffN+j] = convert(Complex128,(Dα'[n,i] * Dα[j,n]))
         end
+        photon_numbers,M
     end
-    # Reshaping the array in a form suitable to solving the system of equations
-    photon_numbers=reshape(transpose(photon_numbers),length(theta)*cutoffN,1)
+    # Reshaping the result into arrays for solving the system of equations
+    photon_numbers = vcat([res[1] for res in res]...)
+    M = vcat([res[2] for res in res]...)
     # Solving the system of equations (very slighly overdetermined, there will
     # be some least square fitting). The system to solve is:
-    # photon_numbers = M * densityMatrixElements
-    density_matrix = M\photon_numbers; # Vector form of the density matrix (ie the elements are 00, 01, 02, ..., cutoffNcutoffN-1, cutoffNcutoffN)
-    density_matrix = transpose(reshape(density_matrix,cutoffN,cutoffN)); # Reshaping the vector into an actual matrix
+    # photon_numbers = M * ρ
+    ρ = M\photon_numbers; # Vector form of the density matrix (ie the elements are 00, 01, 02, ..., cutoffNcutoffN-1, cutoffNcutoffN)
+    ρ = transpose(reshape(ρ,cutoffN,cutoffN)); # Reshaping the vector into an actual matrix
 end
 
 
@@ -131,12 +128,12 @@ function calc_wignerfunction_resonator(cutoffN,wignerSamples,coupling_freq,initi
     #
     for realIndex=1:wignerSamples
         for imagIndex=1:wignerSamples
-            displacement_operator = kron(identity,gen_displacementop((realIndex-wignerSamples/2)/10 + 1im*(imagIndex-wignerSamples/2)/10,cutoffN)) # generating the displacement operator for angle m
+            Dα = kron(identity,gen_displacementop((realIndex-wignerSamples/2)/10 + 1im*(imagIndex-wignerSamples/2)/10,cutoffN)) # generating the displacement operator for angle m
             # For each displaced state, we first find the photon number distribution
-            excited_prob = calc_qubittimeevo(displacement_operator'*initialstate*displacement_operator,time_evo_array)
-            photon_numbers = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq) # solving for the displaced state photon number distributions
+            excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
+            photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq) # solving for the displaced state photon number distributions
             # We then fill the corresponding entry in the winger function array
-            wigner[imagIndex,realIndex] = 2./pi .* sum(parity_matrix .* photon_numbers)
+            wigner[imagIndex,realIndex] = 2/pi * sum(parity_matrix .* photon_numbers)
         end
     end
     return wigner
