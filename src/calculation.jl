@@ -93,9 +93,9 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
     # Solving for the density matrix from photon number distributions
     # We need 2*cutoffN displacements to get enough linearly independent
     # equations. We sample the alpha values from a circle of unit radius.
-    α=[1.0*(cos(θ) + 1.0im*sin(θ)) for θ in 0:π/cutoffN:2π-π/cutoffN]
+    α=[1.0*complex(cos(θ),sin(θ)) for θ in 0:π/cutoffN:2π-π/cutoffN]
     # Do the math
-    res = map(α) do α
+    res = pmap(α) do α
         # For each angle/displaced state, we first find the photon number distribution
         # Generating the displacement operator for angle m
         Dα = kron(identity,gen_displacementop(α,cutoffN))
@@ -121,22 +121,23 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
 end
 
 
-function calc_wignerfunction_resonator(cutoffN,wignerSamples,coupling_freq,initialstate,time_vec,time_evo_array)
-    # Solving for the Wigner Function from photon number distributions
-    wigner=zeros(Float64,wignerSamples,wignerSamples)
-    parity_matrix=ones(Float64,cutoffN,1);parity_matrix[2:2:cutoffN]=-1;
-    #
-    for realIndex=1:wignerSamples
-        for imagIndex=1:wignerSamples
-            Dα = kron(identity,gen_displacementop((realIndex-wignerSamples/2)/10 + 1im*(imagIndex-wignerSamples/2)/10,cutoffN)) # generating the displacement operator for angle m
-            # For each displaced state, we first find the photon number distribution
-            excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
-            photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq) # solving for the displaced state photon number distributions
-            # We then fill the corresponding entry in the winger function array
-            wigner[imagIndex,realIndex] = 2/pi * sum(parity_matrix .* photon_numbers)
-        end
+function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialstate,time_vec,time_evo_array)
+    # Solving for the Wigner function from photon number distributions
+    parity_matrix = ones(Float64,cutoffN,1)
+    parity_matrix[2:2:cutoffN] = -1
+    # Choose where to plot the function
+    disp = linspace(-MAXDISP,MAXDISP,nsamples)
+    # Iterate over all displacements
+    W = pmap(collect(Base.product(1:nsamples,1:nsamples))) do id
+        # Generating the displacement operator for that matrix element
+        Dα = kron(identity,gen_displacementop(complex(disp[id[1]],disp[id[2]]),cutoffN))
+        # For each displaced state, we first find the photon number distribution
+        excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
+        photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq) # solving for the displaced state photon number distributions
+        # We then calculate the entry.
+        2/π * sum(parity_matrix .* photon_numbers)
     end
-    return wigner
+    return reshape(W,nsamples,nsamples)
 end
 
 
