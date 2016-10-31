@@ -32,7 +32,7 @@ julia> partialtrace(ρ,dims,sys)
 """
 function partialtrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
     # Make sure the input arguments make sense
-    if max(sys) > length(dims)
+    if any(sys.>length(dims))
         error("You have given a system index too high for the dimensions specified in `dims`")
     end
     if prod(dims) != size(ρ,1)

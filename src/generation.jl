@@ -1,9 +1,9 @@
-function gen_initialstate(cutoffN::Integer,x::Array{String})
+function gen_initialstate(cutoffN::Integer,kets)
 
-    ketCoeff = zeros(Complex128,length(x),1)
-    parameterArray = zeros(Int,length(x),2)
+    ketCoeff = zeros(Complex128,length(kets),1)
+    parameterArray = zeros(Int,length(kets),2)
 
-    for (i,str) in enumerate(x)
+    for (i,str) in enumerate(kets)
         # First we find where the ket starts
         ketstart = search(str,'|')
         # Grabbing the coefficient in front of ket
@@ -35,8 +35,8 @@ function gen_initialstate(cutoffN::Integer,x::Array{String})
     # Assembling the state density matrix
     state = zeros(Complex128,2*cutoffN,2*cutoffN)
 
-    for i = 1:length(x)
-        for j = 1:length(x)
+    for i = 1:length(kets)
+        for j = 1:length(kets)
             # Defining the ket
             qubitPartKet = zeros(Complex128,2,1) # Initialising the qubit ket (2D)
             qubitPartKet[parameterArray[i,1]+1] = 1 # Setting the vector as (1 0) for g or (0 1) for e

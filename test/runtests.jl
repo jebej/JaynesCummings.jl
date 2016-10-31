@@ -55,5 +55,5 @@ densitymatrix = calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,
 @test densitymatrix ≈ good_densitymatrix
 
 println("Tests passed.")
-println("Now benchmarking...")
-include("perf/bench.jl")
+#println("Now benchmarking...")
+#include("perf/bench.jl")
