@@ -1,7 +1,8 @@
-cd(Base.source_path()[1:end-11])
-using JaynesCummings, BenchmarkTools
-include("benchmarkreport.jl")
+using BenchmarkTools
+import JaynesCummings
 const jc = JaynesCummings
+cd(Base.source_path()[1:end-11])
+include("benchmarkreport.jl")
 
 # Define a parent BenchmarkGroup to contain our suite
 const suite = BenchmarkGroup()
@@ -11,13 +12,13 @@ suite["generation"] = BenchmarkGroup(["hamiltonian,state"])
 suite["calculation"] = BenchmarkGroup(["densitymatrix,wignerfunction"])
 
 # Parameters
-cutoffN = 6
+cutoffN = 14
 qubit_freq = 2*pi*6.57E9
 resonator_freq = qubit_freq
 coupling_freq = 0.5*2*pi*19E6
-finalTime = 500E-9
-samples = 300
-wigner_samples = 5
+finalTime = 200E-9
+samples = 200
+wigner_samples = 6
 initket = ["|g,0>","0.707106781+0.907106781im|g,1>","1.6025403-0.5im|g,3>"]
 
 # State generation benchmark
