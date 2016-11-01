@@ -61,8 +61,10 @@ end
 function calc_qubittimeevo(state,time_evo_array)
     excited_prob = zeros(Float64,length(time_evo_array))
     cutoffN = div(size(state,1),2)
-    # Time evolve the system density matrix and "measure" the qubit at each time sample taken. This is done by
-    # tracing out the resonator and keeping the excited state entry of the density matrix (ie, entry 2,2 in the matrix)
+    # Time evolve the system density matrix according to the time-independent
+    # solution to the von Neumann equation and "measure" the qubit at each time
+    # sample taken. This is done by tracing out the resonator and keeping the
+    # excited state entry of the density matrix (ie, entry 2,2 in the matrix)
     for i=1:length(time_evo_array)
         excited_prob[i] = real(partialtrace(time_evo_array[i] * state * time_evo_array[i]',[2;cutoffN],2)[2,2])
     end
@@ -86,8 +88,6 @@ function calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
     return fit.param
 end
 
-import Base.+
-+(a::Tuple{Array{Float64,2},Array{Complex128,2}},b::Tuple{Array{Float64,2},Array{Complex128,2}})=(a[1]+b[1],a[2]+b[2])
 
 function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
     # Solving for the density matrix from photon number distributions
@@ -106,7 +106,7 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
         M = Array{Complex128}(cutoffN,cutoffN^2)
         for n=1:cutoffN, i=1:cutoffN, j=1:cutoffN
             # Generating the displacement operator matrix elements
-            M[n,(i-1)*cutoffN+j] = convert(Complex128,(Dα'[n,i] * Dα[j,n]))
+            M[n,(i-1)*cutoffN+j] = conj(Dα[i,n]) * Dα[j,n]
         end
         photon_numbers,M
     end
@@ -116,8 +116,8 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
     # Solving the system of equations (very slighly overdetermined, there will
     # be some least square fitting). The system to solve is:
     # photon_numbers = M * ρ
-    ρ = M\photon_numbers; # Vector form of the density matrix (ie the elements are 00, 01, 02, ..., cutoffNcutoffN-1, cutoffNcutoffN)
-    ρ = transpose(reshape(ρ,cutoffN,cutoffN)); # Reshaping the vector into an actual matrix
+    ρ = M\photon_numbers # Vector form of the density matrix (ie the elements are 00, 01, 02, ..., cutoffNcutoffN-1, cutoffNcutoffN)
+    ρ = transpose(reshape(ρ,cutoffN,cutoffN)) # Reshaping the vector into an actual matrix
 end
 
 
@@ -128,7 +128,7 @@ function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialsta
     # Choose where to plot the function
     disp = linspace(-MAXDISP,MAXDISP,nsamples)
     # Iterate over all displacements
-    W = pmap(collect(Base.product(1:nsamples,1:nsamples))) do id
+    W = pmap(collect(product(1:nsamples,1:nsamples))) do id
         # Generating the displacement operator for that matrix element
         Dα = kron(identity,gen_displacementop(complex(disp[id[1]],disp[id[2]]),cutoffN))
         # For each displaced state, we first find the photon number distribution
