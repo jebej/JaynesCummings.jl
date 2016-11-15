@@ -102,8 +102,9 @@ end
 function gen_displacementop(alpha,N)
     # Generates the displacement operator for a qubit and resonator system
     # (only displaces the resonator, the identity is tensored in for the
-    # qubit).
-    expm( alpha .* a_dagger(N) - alpha' .* a(N) )
+    # qubit). We calculate the matrix exponential with twice the harmonic
+    # oscilator space for better accuracy.
+    expm( alpha * a_dagger(2N) - alpha' * a(2N) )[1:N,1:N]
 end
 
 
