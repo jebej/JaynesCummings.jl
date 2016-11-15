@@ -39,10 +39,10 @@ initialstate = gen_initialstate(cutoffN,["|g,0>","0.707106781+0.907106781im|g,3>
 @test initialstate ≈ good_initialstate
 
 hamiltonian = gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN)
-@test hamiltonian == good_hamiltonian
+@test hamiltonian ≈ good_hamiltonian
 
 time_vec, time_evo_array = gen_timeevoarray(hamiltonian,finalTime,samples)
-@test time_vec == good_time_vec
+@test time_vec ≈ good_time_vec
 @test time_evo_array[10] ≈ good_time_evo_array_10
 
 excited_prob = calc_qubittimeevo(initialstate,time_evo_array) # Calculate the excited probability of the qubit as a function of time
