@@ -1,5 +1,5 @@
 function plot_qubittimeevo(time_vec,excited_prob)
-    p = scatter(;x=time_vec/1E9,y=excited_prob,mode="line")
+    p = scatter(;x=time_vec*1E9,y=excited_prob,mode="line")
 
     l = Layout(;title="Qubit Excited State Probability",
     xaxis=attr(title="Interaction Time (ns)", showgrid=false, zeroline=false),

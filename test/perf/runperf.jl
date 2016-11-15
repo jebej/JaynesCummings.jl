@@ -28,10 +28,10 @@ suite["generation"]["initialstate"] = @benchmarkable jc.gen_initialstate($cutoff
 initialstate = jc.gen_initialstate(cutoffN,initket)
 
 # Hamiltonian generation benchmark
-suite["generation"]["hamiltonian"] = @benchmarkable jc.gen_hamiltonian($qubit_freq,$resonator_freq,$coupling_freq,$cutoffN,$0)
+suite["generation"]["hamiltonian"] = @benchmarkable jc.gen_hamiltonian($qubit_freq,$resonator_freq,$coupling_freq,$cutoffN)
 
 # We actually need the hamiltonian
-hamiltonian = jc.gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN,0)
+hamiltonian = jc.gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN)
 
 # Time evolution operator benchmark
 suite["generation"]["timeevo"] = @benchmarkable jc.gen_timeevoarray($hamiltonian,$finalTime,$samples)

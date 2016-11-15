@@ -58,17 +58,16 @@ function partialtrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
 end
 
 
-function calc_qubittimeevo(state,time_evo_array)
+function calc_qubittimeevo(ρ,time_evo_array)
     excited_prob = zeros(Float64,length(time_evo_array))
-    cutoffN = div(size(state,1),2)
+    cutoffN = div(size(ρ,1),2)
     # Time evolve the system density matrix according to the time-independent
     # solution to the von Neumann equation and "measure" the qubit at each time
     # sample taken. This is done by tracing out the resonator and keeping the
     # excited state entry of the density matrix (ie, entry 2,2 in the matrix)
-    for i=1:length(time_evo_array)
-        excited_prob[i] = real(partialtrace(time_evo_array[i] * state * time_evo_array[i]',[2;cutoffN],2)[2,2])
+    map(time_evo_array) do U
+        real(partialtrace(U*ρ*U',[2,cutoffN],2)[2,2])
     end
-    return excited_prob
 end
 
 
@@ -93,12 +92,12 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
     # Solving for the density matrix from photon number distributions
     # We need 2*cutoffN displacements to get enough linearly independent
     # equations. We sample the alpha values from a circle of unit radius.
-    α=[1.0*complex(cos(θ),sin(θ)) for θ in 0:π/cutoffN:2π-π/cutoffN]
+    α = [1.0*complex(cos(θ),sin(θ)) for θ in 0:π/cutoffN:2π-π/cutoffN]
     # Do the math
     res = pmap(α) do α
         # For each angle/displaced state, we first find the photon number distribution
         # Generating the displacement operator for angle m
-        Dα = kron(identity,gen_displacementop(α,cutoffN))
+        Dα = eye(2) ⊗ gen_displacementop(α,cutoffN)
         excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
         # Solving for the displaced state photon number distributions
         photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
@@ -128,9 +127,9 @@ function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialsta
     # Choose where to plot the function
     disp = linspace(-MAXDISP,MAXDISP,nsamples)
     # Iterate over all displacements
-    W = pmap(collect(product(1:nsamples,1:nsamples))) do id
+    W = pmap(product(disp,disp)) do id
         # Generating the displacement operator for that matrix element
-        Dα = kron(identity,gen_displacementop(complex(disp[id[1]],disp[id[2]]),cutoffN))
+        Dα = qeye(2) ⊗ gen_displacementop(complex(id[1],id[2]),cutoffN)
         # For each displaced state, we first find the photon number distribution
         excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
         photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq) # solving for the displaced state photon number distributions
@@ -142,21 +141,19 @@ end
 
 
 function cal_densitymatrix_qubit(xup,yup,zup)
-    # A qubit in state |ψ> is defined by two values, a & b, where |ψ> = a|↑>+b|↓>. By convention, a is real and positive, and b is in general complex.
-
-    # From the probability of measuring |↑> (that is, measuring "up" in the z basis), we can deduce a, and the magnitude of b
-
+    # A qubit in state |ψ> is defined by two values, a & b, where |ψ> =
+    # a|↑>+b|↓>. By convention, a is real and positive, and b is in general
+    # complex. From the probability of measuring |↑> (that is, measuring "up" in
+    # the z basis), we can deduce a, and the magnitude of b
     a = sqrt(zup)
     magb = sqrt(1-zup)
-
-    # The probability of measuring "up" in the x basis is equal to |1/sqrt(2)*(<↑|+<↓|) |ψ>|^2, which is equal to 1/2(a^2+b^2) + a mag(b) cos(ϕ)
+    # The probability of measuring "up" in the x basis is equal to
+    # |1/sqrt(2)*(<↑|+<↓|)|ψ>|^2, which is equal to 1/2(a^2+b^2)+a*mag(b)cos(ϕ)
     cosϕ = ( xup - (a^2 + magb^2)/2 ) / (a * magb)
-
-    # The probability of measuring "up" in the y basis is equal to |1/sqrt(2)*(<↑|-i<↓|) |ψ>|^2, which is equal to 1/2(a^2+b^2) + a mag(b) sin(ϕ)
+    # The probability of measuring "up" in the y basis is equal to
+    # |1/sqrt(2)*(<↑|-i<↓|)|ψ>|^2, which is equal to 1/2(a^2+b^2)+a*mag(b)sin(ϕ)
     sinϕ = ( yup - (a^2 + magb^2)/2 ) / (a * magb)
-
-    b = magb * (cosϕ + 1im * sinϕ)
-
+    b = magb * complex(cosϕ,sinϕ)
     return a, b
 end
 
@@ -166,17 +163,13 @@ function partialtrace_old(rho,dimOfSubsystemToKeep)
     if maximum(abs(rho'-rho))>8E-15
         error("This density matrix is not Hermitian!")
     end
-
     dimOfSubsystemToTraceOut = div(size(rho)[1] , dimOfSubsystemToKeep)
-
     matrix = zeros(Complex128,dimOfSubsystemToKeep,dimOfSubsystemToKeep)
-
     for i=1:dimOfSubsystemToTraceOut
         vector = zeros(Complex128,dimOfSubsystemToTraceOut)
         vector[i] = (1.0+1.0im)/sqrt(2)
-        fullVector = kron(eye(dimOfSubsystemToKeep),vector)
+        fullVector = qeye(dimOfSubsystemToKeep) ⊗ vector
         matrix = matrix + fullVector' * rho * fullVector
     end
-
     return matrix
 end

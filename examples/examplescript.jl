@@ -1,7 +1,7 @@
 addprocs(4)
 using JaynesCummings
 
-cutoffN = 36  #cutoffN should be at least max(n)+1; where max(n) is the highest resonator initial state
+cutoffN = 10  #cutoffN should be at least max(n)+1; where max(n) is the highest resonator initial state
 qubit_freq = 2*pi*6.57E9
 resonator_freq = qubit_freq
 coupling_freq = 0.5*2*pi*19E6
@@ -15,7 +15,7 @@ ket = ["|g,0>","3.27|g,3>","2.39|g,6>","0.85|g,9>"] # zombie cat state
 
 # Generate the initial state and the hamiltonian
 initialstate = gen_initialstate(cutoffN,ket)
-hamiltonian = gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN,0)
+hamiltonian = gen_hamiltonian(qubit_freq,resonator_freq,coupling_freq,cutoffN)
 time_vec, time_evo_array = gen_timeevoarray(hamiltonian,finalTime,samples)
 
 # Calculate the excited probability of the qubit as a function of time

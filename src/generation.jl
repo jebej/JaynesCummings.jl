@@ -1,4 +1,4 @@
-function gen_initialstate(cutoffN::Integer,kets)
+function gen_initialstate(N,kets)
 
     ketCoeff = zeros(Complex128,length(kets),1)
     parameterArray = zeros(Int,length(kets),2)
@@ -27,32 +27,30 @@ function gen_initialstate(cutoffN::Integer,kets)
         parameterArray[i,2] = parse(Int,str[ketstart+3:end-1])
     end
 
-    # Making sure that cutoffN is large enough
-    if cutoffN <=  maximum(parameterArray[:,2])
-        error("The size of the resonator space (cutoffN) must be at least the size of the larger number state plus one (due to zero state)!")
+    # Making sure that N is large enough
+    if N <=  maximum(parameterArray[:,2])
+        error("The size of the resonator space (N) must be at least the size of the larger number state plus one (due to zero state)!")
     end
 
     # Assembling the state density matrix
-    state = zeros(Complex128,2*cutoffN,2*cutoffN)
+    state = zeros(Complex128,2N,2N)
 
-    for i = 1:length(kets)
-        for j = 1:length(kets)
-            # Defining the ket
-            qubitPartKet = zeros(Complex128,2,1) # Initialising the qubit ket (2D)
-            qubitPartKet[parameterArray[i,1]+1] = 1 # Setting the vector as (1 0) for g or (0 1) for e
-            resonatorPartKet = zeros(Complex128,cutoffN,1) # Initialising the resonator ket (cutoffND)
-            resonatorPartKet[parameterArray[i,2]+1] = 1 # Setting the vector
-            ket = kron(qubitPartKet,resonatorPartKet) # Tensor product
-            # Defining the bra
-            qubitPartBra =zeros(Complex128,2,1)
-            qubitPartBra[parameterArray[j,1]+1] = 1
-            resonatorPartBra = zeros(Complex128,cutoffN,1)
-            resonatorPartBra[parameterArray[j,2]+1] = 1
-            bra = kron(qubitPartBra,resonatorPartBra)'
-            # Multiplying the initial ket with its complex conjugate to make
-            # the density matrix
-            state = state + ketCoeff[i]*ketCoeff[j]'*ket*bra
-        end
+    for i = 1:length(kets), j = 1:length(kets)
+        # Defining the ket
+        qubit_ket = zeros(Complex128,2,1) # Initialising the qubit ket (2D)
+        qubit_ket[parameterArray[i,1]+1] = 1 # Setting the vector as (1 0) for g or (0 1) for e
+        resonator_ket = zeros(Complex128,N,1) # Initialising the resonator ket (ND)
+        resonator_ket[parameterArray[i,2]+1] = 1 # Setting the vector
+        ket = qubit_ket ⊗ resonator_ket # Tensor product
+        # Defining the bra
+        qubit_bra =zeros(Complex128,2,1)
+        qubit_bra[parameterArray[j,1]+1] = 1
+        resonator_bra = zeros(Complex128,N,1)
+        resonator_bra[parameterArray[j,2]+1] = 1
+        bra = (qubit_bra ⊗ resonator_bra)'
+        # Multiplying the initial ket with its complex conjugate to make
+        # the density matrix
+        state = state + ketCoeff[i]*ketCoeff[j]'*ket*bra
     end
 
     norm = 1/sum(abs(ketCoeff[:]).^2)
@@ -61,32 +59,33 @@ function gen_initialstate(cutoffN::Integer,kets)
 end
 
 
-function gen_hamiltonian(ω_q,ω_r,g,cutoffN,noiseAdded)
+function gen_hamiltonian(ω_q,ω_r,g,N;rwa=true,noisy=false)
     # This function generates a times invariant matrix for the Jaynes-Cummings
     # Hamiltonian. The parameters ω_r, ω_q and g should be given in
-    # rad/s. The cutoffN parameter is the highest energy level of the harmonic
+    # rad/s. The N parameter is the highest energy level of the harmonic
     # oscillator that is considered. Higher levels are truncated.
 
     # The Jaynes-Cummings Hamiltonian is written with the following
     # conventions: ω_r is the resonator frequency, ω_q is the qubit
     # frequency and g is the coupling. The resonator Hilbert space is truncated
-    # to n = cutoffN, and the ground state of the qubit is given by the vector
+    # to n = N, and the ground state of the qubit is given by the vector
     # [1;0] (hence the minus sign before σ_z).
-    jaynesCummings = Array{Complex128}(2*cutoffN,2*cutoffN)
-    jaynesCummings =
-    # harmonic oscillator term
-    ħ * ω_r .* kron(identity,a_dagger(cutoffN)) * kron(identity,a(cutoffN)) -
-    # qubit term
-    0.5 .* ħ .* ω_q .* kron(σ_z,eye(cutoffN)) +
-    # interaction term
-    ħ .* g .* ( kron(σ_plus,a(cutoffN)) + kron(σ_minus,a_dagger(cutoffN)) )
 
-    if noiseAdded==1
-        randM = rand(2*cutoffN)
-        randomness = 0.005*ħ*g*(randM+randM')
-        jaynesCummings = jaynesCummings + randomness
+    H = ħ * ω_r * qeye(2) ⊗ (a_dagger(N)*a(N)) - # resonator
+        0.5 * ħ * ω_q * σ_z ⊗ qeye(N) # qubit
+
+    if rwa # interaction, with or without rotating wave approximation
+        H += ħ * g * ( σ_plus ⊗ a(N) + σ_minus ⊗ a_dagger(N) )
+    else
+        H += ħ * g * (σ_plus + σ_minus) ⊗ (a(N) + a_dagger(N))
     end
-    return jaynesCummings
+
+    if noisy
+        noise = rand(Complex128,2N,2N)
+        H += 0.01 * ħ * g * (noise'+noise)
+    end
+
+    return H
 end
 
 
@@ -100,26 +99,31 @@ function gen_timeevoarray(H,finalTime,samples)
 end
 
 
-function gen_displacementop(alpha,cutoffN)
+function gen_displacementop(alpha,N)
     # Generates the displacement operator for a qubit and resonator system
     # (only displaces the resonator, the identity is tensored in for the
     # qubit).
-    expm( alpha .* a_dagger(cutoffN) - alpha' .* a(cutoffN) )
+    expm( alpha .* a_dagger(N) - alpha' .* a(N) )
 end
 
 
-function a(cutoffN) # Truncated matrix for the lowering operator
-    out = zeros(Complex128,cutoffN,cutoffN)
-    for i = 1:cutoffN-1
+function qeye(d)
+    eye(Complex128,d)
+end
+
+
+function a(N) # Truncated matrix for the lowering operator
+    out = zeros(Complex128,N,N)
+    for i = 1:N-1
         out[i,i+1] = sqrt(i)
     end
     return out
 end
 
 
-function a_dagger(cutoffN) # Truncated matrix for the raising operator
-    out = zeros(Complex128,cutoffN,cutoffN)
-    for i = 1:cutoffN-1
+function a_dagger(N) # Truncated matrix for the raising operator
+    out = zeros(Complex128,N,N)
+    for i = 1:N-1
         out[i+1,i] = sqrt(i)
     end
     return out
