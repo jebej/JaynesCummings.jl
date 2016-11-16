@@ -59,10 +59,9 @@ end
 
 
 function calc_qubittimeevo(ρ,time_evo_array)
-    excited_prob = zeros(Float64,length(time_evo_array))
     cutoffN = div(size(ρ,1),2)
     # Time evolve the system density matrix according to the time-independent
-    # solution to the von Neumann equation and "measure" the qubit at each time
+    # solution of the von Neumann equation and "measure" the qubit at each time
     # sample taken. This is done by tracing out the resonator and keeping the
     # excited state entry of the density matrix (ie, entry 2,2 in the matrix)
     map(time_evo_array) do U
@@ -82,7 +81,7 @@ end
 
 
 function calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
-    fun = (x,p)->excited_model(x,p,cutoffN,coupling_freq)
+    fun(x,p) = excited_model(x,p,cutoffN,coupling_freq)
     fit = curve_fit(fun,time_vec,excited_prob,ones(Float64,cutoffN)*0.1)
     return fit.param
 end
@@ -96,10 +95,10 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
     # Do the math
     res = pmap(α) do α
         # For each angle/displaced state, we first find the photon number distribution
-        # Generating the displacement operator for angle m
-        Dα = eye(2) ⊗ gen_displacementop(α,cutoffN)
+        # Generating the displacement operator for angle α
+        Dα = qeye(2) ⊗ gen_displacementop(α,cutoffN)
+        # Solving for the displaced state photon number distribution
         excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
-        # Solving for the displaced state photon number distributions
         photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
         # We then calculate the displacement operator matrix elements
         M = Array{Complex128}(cutoffN,cutoffN^2)
@@ -122,8 +121,7 @@ end
 
 function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialstate,time_vec,time_evo_array)
     # Solving for the Wigner function from photon number distributions
-    parity_matrix = ones(Float64,cutoffN,1)
-    parity_matrix[2:2:cutoffN] = -1
+    parity_matrix = [(-1.0)^i for i = 0:cutoffN-1]
     # Choose where to plot the function
     disp = linspace(-MAXDISP,MAXDISP,nsamples)
     # Iterate over all displacements
@@ -132,9 +130,25 @@ function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialsta
         Dα = qeye(2) ⊗ gen_displacementop(complex(id[1],id[2]),cutoffN)
         # For each displaced state, we first find the photon number distribution
         excited_prob = calc_qubittimeevo(Dα'*initialstate*Dα,time_evo_array)
-        photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq) # solving for the displaced state photon number distributions
+        photon_numbers = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
         # We then calculate the entry.
         2/π * sum(parity_matrix .* photon_numbers)
+    end
+    return convert(Array{Float64,2},reshape(W,nsamples,nsamples))
+end
+
+
+function calc_wignerfunction_resonator(cutoffN,nsamples,ρ)
+    # Solving for the Wigner function from the density matrix
+    parity_matrix = [(-1.0)^i for i = 0:cutoffN-1]
+    # Choose where to plot the function
+    disp = linspace(-MAXDISP,MAXDISP,nsamples)
+    # Iterate over all displacements
+    W = map(product(disp,disp)) do id
+        # Generating the displacement operator for that matrix element
+        Dα = gen_displacementop(complex(id[1],id[2]),cutoffN)
+        # We then calculate the entry.
+        2/π * sum(parity_matrix .* real(diag(Dα'*ρ*Dα)))
     end
     return reshape(W,nsamples,nsamples)
 end

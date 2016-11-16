@@ -13,4 +13,7 @@ include("generation.jl")
 include("calculation.jl")
 include("plotting.jl")
 
+
+runtests() = include(joinpath(dirname(dirname(@__FILE__)),"test","runtests.jl"))
+
 end

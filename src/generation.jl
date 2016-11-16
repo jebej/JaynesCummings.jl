@@ -104,7 +104,7 @@ function gen_displacementop(alpha,N)
     # (only displaces the resonator, the identity is tensored in for the
     # qubit). We calculate the matrix exponential with twice the harmonic
     # oscilator space for better accuracy.
-    expm( alpha * a_dagger(2N) - alpha' * a(2N) )[1:N,1:N]
+    expm( alpha * a_dagger(N) - alpha' * a(N) )
 end
 
 
