@@ -52,7 +52,7 @@ photons = calc_photonnumbers(time_vec,real(excited_prob),cutoffN,coupling_freq)
 @test photons ≈ good_photons
 
 densitymatrix = calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
-@test densitymatrix ≈ good_densitymatrix
+@test densitymatrix ≈ partialtrace(initialstate,[2,cutoffN],1)
 
 println("Tests passed.")
 #println("Now benchmarking...")
