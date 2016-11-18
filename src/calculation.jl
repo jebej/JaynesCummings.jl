@@ -119,11 +119,11 @@ function calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_ve
 end
 
 
-function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialstate,time_vec,time_evo_array)
+function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialstate,time_vec,time_evo_array;maxdisp=MAXDISP)
     # Solving for the Wigner function from photon number distributions
     parity_matrix = [(-1.0)^i for i = 0:cutoffN-1]
     # Choose where to plot the function
-    disp = linspace(-MAXDISP,MAXDISP,nsamples)
+    disp = linspace(-maxdisp,maxdisp,nsamples)
     # Iterate over all displacements
     W = pmap(product(disp,disp)) do id
         # Generating the displacement operator for that matrix element
@@ -138,11 +138,11 @@ function calc_wignerfunction_resonator(cutoffN,nsamples,coupling_freq,initialsta
 end
 
 
-function calc_wignerfunction_resonator(cutoffN,nsamples,ρ)
+function calc_wignerfunction_resonator(cutoffN,nsamples,ρ;maxdisp=MAXDISP)
     # Solving for the Wigner function from the density matrix
     parity_matrix = [(-1.0)^i for i = 0:cutoffN-1]
     # Choose where to plot the function
-    disp = linspace(-MAXDISP,MAXDISP,nsamples)
+    disp = linspace(-maxdisp,maxdisp,nsamples)
     # Iterate over all displacements
     W = map(product(disp,disp)) do id
         # Generating the displacement operator for that matrix element

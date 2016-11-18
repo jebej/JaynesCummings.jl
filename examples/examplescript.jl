@@ -1,7 +1,7 @@
 addprocs(4)
 using JaynesCummings
 
-cutoffN = 10  #cutoffN should be at least max(n)+1; where max(n) is the highest resonator initial state
+cutoffN = 16  #cutoffN should be at least max(n)+1; where max(n) is the highest resonator initial state
 qubit_freq = 2*pi*6.57E9
 resonator_freq = qubit_freq
 coupling_freq = 0.5*2*pi*19E6
@@ -27,7 +27,7 @@ photons = calc_photonnumbers(time_vec,excited_prob,cutoffN,coupling_freq)
 plot_photonnumbers(photons)
 
 # Calculate the density matrix by repeating the above while displacing the resonator
-densitymatrix =  calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
+@time densitymatrix =  calc_densitymatrix_resonator(cutoffN,coupling_freq,initialstate,time_vec,time_evo_array)
 plot_densitymatrix(densitymatrix)
 
 # Calculate the Wigner function (this will take some time)

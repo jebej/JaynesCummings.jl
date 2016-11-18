@@ -47,10 +47,22 @@ function plot_densitymatrix(densitymatrix)
     plot(p,l)
 end
 
-function plot_wignerfunction(matrix)
-    x = ((1:size(matrix,1))-size(matrix,1)/2)/10
+function plot_wignerfunction(matrix;maxdisp=MAXDISP)
+    x = linspace(-maxdisp,maxdisp,size(matrix,1))
 
     p = heatmap(;x=x,y=x,z=matrix,
+    zsmooth="best",
+    colorscale="Viridis")
+
+    l = Layout(;title="Wigner Function")
+
+    plot(p,l)
+end
+
+function plot_wignerfunction3d(matrix;maxdisp=MAXDISP)
+    x = linspace(-maxdisp,maxdisp,size(matrix,1))
+
+    p = surface(;x=x,y=x,z=matrix,
     zsmooth="best",
     colorscale="Viridis")
 
