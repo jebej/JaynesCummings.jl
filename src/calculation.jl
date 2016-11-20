@@ -59,13 +59,13 @@ end
 
 
 function calc_qubittimeevo(ρ,time_evo_array)
-    cutoffN = div(size(ρ,1),2)
+    N = div(size(ρ,1),2)
     # Time evolve the system density matrix according to the time-independent
     # solution of the von Neumann equation and "measure" the qubit at each time
     # sample taken. This is done by tracing out the resonator and keeping the
     # excited state entry of the density matrix (ie, entry 2,2 in the matrix)
     map(time_evo_array) do U
-        real(partialtrace(U*ρ*U',[2,cutoffN],2)[2,2])
+        real(partialtrace(U*ρ*U',[2,N],2)[2,2])
     end
 end
 

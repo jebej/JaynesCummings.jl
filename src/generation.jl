@@ -89,9 +89,22 @@ function gen_hamiltonian(ω_q,ω_r,g,N;rwa=true,noisy=false)
 end
 
 
-function gen_timeevoarray(H,finalTime,samples)
+function gen_drive_hamiltonian(ω_d,N,samples=16)
+    Δt = (2π/ω_d)/samples # Calculate Δt based on the desired number of samples per period
+    time_vec = linspace(0,2π/ω_d,samples+1)[1:end-1] # Calculate operator for a full period
+    I_m = qeye(2)
+    adag_m = a_dagger(N)
+    a_m = a(N)
+    H_d_array = map(time_vec) do t
+        ħ * I_m ⊗ (adag_m*exp(-im * ω_d * t) + a_m*exp(im * ω_d * t))
+    end
+    return Δt, H_d_array
+end
+
+
+function gen_timeevoarray(H,t_f,samples)
     # Generate the time evolution array for a time independent Hamiltonian
-    time_vec=(0:samples-1)*finalTime/samples
+    time_vec = (0:samples-1)*t_f/samples
     time_evo_array = map(time_vec) do t
         expm(-1.0im * H * t / ħ)
     end
