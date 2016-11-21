@@ -59,7 +59,7 @@ function gen_initialstate(N,kets)
 end
 
 
-function gen_hamiltonian(ω_q,ω_r,g,N;rwa=true,noisy=false)
+function gen_hamiltonian(N,ω_q,ω_r,g;rwa=true,noisy=false)
     # This function generates a times invariant matrix for the Jaynes-Cummings
     # Hamiltonian. The parameters ω_r, ω_q and g should be given in
     # rad/s. The N parameter is the highest energy level of the harmonic
@@ -103,12 +103,12 @@ end
 
 
 function gen_timeevoarray(H,t_f,samples)
-    # Generate the time evolution array for a time independent Hamiltonian
-    time_vec = (0:samples-1)*t_f/samples
-    time_evo_array = map(time_vec) do t
+    # Generate the time evolution operators for a time-independent Hamiltonian
+    times = linspace(0,t_f,samples+1)[1:end-1]
+    U_array = map(times) do t
         expm(-1.0im * H * t / ħ)
     end
-    return time_vec, time_evo_array
+    return times, U_array
 end
 
 
