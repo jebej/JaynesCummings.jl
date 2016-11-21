@@ -69,6 +69,31 @@ function calc_qubittimeevo(ρ,U_array)
 end
 
 
+function calc_qubittimeevo_rel(ρ,U_rel_array,steps,decimation=10)
+    # Time evolve the system density matrix by applying the relative time
+    # evolution in succession and measure the qubit state at each step.
+    N = div(size(ρ,1),2)
+    c = length(U_rel_array)
+    ρ_evo = deepcopy(ρ)
+    #nvec = collect(0.0:N-1)'
+
+    e_prob = Array{Float64}(ceil(Int,steps/decimation))
+    #n_expect = Array{Float64}(ceil(Int,steps/decimation))
+
+    j = 1
+    for i = 1:steps
+        # Note the use of the modulo operation to apply U in cycles
+        ρ_evo = U_rel_array[(i-1)%c+1]*ρ_evo*U_rel_array[(i-1)%c+1]'
+        if (i-1)%decimation==0
+            e_prob[j] = real(partialtrace(ρ_evo,[2,N],2)[2,2])
+            #n_expect[j] = (nvec'*real(diag(partialtrace(ρ_evo,[2,N],1))))[1]
+            j += 1
+        end
+    end
+    return e_prob
+end
+
+
 function excited_model(x,p,N,g)
     # Fit function (resonator state only)
     a = zeros(Float64,length(x))
@@ -86,8 +111,9 @@ function calc_photonnumbers(N,g,times,e_prob)
 end
 
 
-function calc_densitymatrix_resonator(N,ρ,g,times,U_array)
+function calc_densitymatrix_resonator(ρ,g,times,U_array)
     # Solving for the density matrix from photon number distributions
+    N = div(size(ρ,1),2)
     # We need 2*N displacements to get enough linearly independent
     # equations. We sample the alpha values from a circle of unit radius.
     α = [1.0*complex(cos(θ),sin(θ)) for θ in 0:π/N:2π-π/N]
@@ -113,16 +139,17 @@ function calc_densitymatrix_resonator(N,ρ,g,times,U_array)
     # Solving the system of equations (very slighly overdetermined, there will
     # be some least square fitting). The system to solve is:
     # photon_numbers = M * ρ
-    ρ = M\photon_numbers # Vector form of the density matrix (ie the elements are 0 0, 0 1, 0 2, ..., N N-1, N N)
-    ρ = transpose(reshape(ρ,N,N)) # Reshaping the vector into an actual matrix
+    ρ_res = M\photon_numbers # Vector form of the density matrix (ie the elements are 0 0, 0 1, 0 2, ..., N N-1, N N)
+    ρ_res = transpose(reshape(ρ_res,N,N)) # Reshaping the vector into an actual matrix
 end
 
 
-function calc_wignerfunction_resonator(N,ρ,g,times,U_array,nsamples;maxdisp=MAXDISP)
+function calc_wignerfunction_resonator(ρ,g,times,U_array,w_samples;maxdisp=MAXDISP)
+    N = div(size(ρ,1),2)
     # Solving for the Wigner function from photon number distributions
     parity_matrix = [(-1.0)^i for i = 0:N-1]
     # Choose where to plot the function
-    disp = linspace(-maxdisp,maxdisp,nsamples)
+    disp = linspace(-maxdisp,maxdisp,w_samples)
     # Iterate over all displacements
     W = pmap(product(disp,disp)) do id
         # Generating the displacement operator for that matrix element
@@ -133,23 +160,23 @@ function calc_wignerfunction_resonator(N,ρ,g,times,U_array,nsamples;maxdisp=MAX
         # We then calculate the entry.
         2/π * sum(parity_matrix .* photon_numbers)
     end
-    return convert(Array{Float64,2},reshape(W,nsamples,nsamples))
+    return convert(Array{Float64,2},reshape(W,w_samples,w_samples))
 end
 
 
-function calc_wignerfunction_resonator(N,nsamples,ρ;maxdisp=MAXDISP)
+function calc_wignerfunction_resonator(ρ_res,w_samples;maxdisp=MAXDISP)
+    N = size(ρ_res,1)
     # Solving for the Wigner function from the density matrix
     parity_matrix = [(-1.0)^i for i = 0:N-1]
     # Choose where to plot the function
-    disp = linspace(-maxdisp,maxdisp,nsamples)
+    disp = linspace(-maxdisp,maxdisp,w_samples)
     # Iterate over all displacements
-    W = map(product(disp,disp)) do id
+    map(product(disp,disp)) do id
         # Generating the displacement operator for that matrix element
         Dα = gen_displacementop(complex(id[1],id[2]),N)
         # We then calculate the entry.
-        2/π * sum(parity_matrix .* real(diag(Dα'*ρ*Dα)))
+        2/π * sum(parity_matrix .* real(diag(Dα'*ρ_res*Dα)))
     end
-    return reshape(W,nsamples,nsamples)
 end
 
 

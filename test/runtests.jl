@@ -46,17 +46,17 @@ times, U_array = gen_timeevoarray(H,t_f,t_samples)
 @test times ≈ (0:t_samples-1)*t_f/t_samples
 @test U_array[10] ≈ good_time_evo_array_10
 
-excited_prob = calc_qubittimeevo(ρ,U_array) # Calculate the excited probability of the qubit as a function of time
-@test excited_prob[15] ≈ good_excited_prob_15
+e_prob = calc_qubittimeevo(ρ,U_array)
+@test e_prob[15] ≈ good_excited_prob_15
 
-photons = calc_photonnumbers(N,g,times,excited_prob)
+photons = calc_photonnumbers(N,g,times,e_prob)
 @test photons ≈ good_photons
 
-densitymatrix = calc_densitymatrix_resonator(N,ρ,g,times,U_array)
-@test densitymatrix ≈ partialtrace(ρ,[2,N],1)
+ρ_resonator = calc_densitymatrix_resonator(ρ,g,times,U_array)
+@test ρ_resonator ≈ partialtrace(ρ,[2,N],1)
 
-wignerfunction = calc_wignerfunction_resonator(N,ρ,g,times,U_array,w_samples)
-@test wignerfunction ≈ calc_wignerfunction_resonator(N,w_samples,densitymatrix)
+W = calc_wignerfunction_resonator(ρ,g,times,U_array,w_samples)
+@test W ≈ calc_wignerfunction_resonator(ρ_resonator,w_samples)
 
 println("Tests passed.")
 #println("Now benchmarking...")

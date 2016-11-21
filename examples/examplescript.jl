@@ -1,4 +1,4 @@
-#addprocs(4)
+addprocs(4)
 using JaynesCummings
 
 N = 16  # N should be larger than the highest resonator initial state
@@ -29,9 +29,9 @@ photons = calc_photonnumbers(N,g,times,e_prob)
 plot_photonnumbers(photons)
 
 # Calculate the density matrix by repeating the above while displacing the resonator
-ρ_resonator =  calc_densitymatrix_resonator(N,ρ,g,times,U_array)
+ρ_resonator =  calc_densitymatrix_resonator(ρ,g,times,U_array)
 plot_densitymatrix(ρ_resonator)
 
 # Calculate the Wigner function (this will take some time)
-W = calc_wignerfunction_resonator(N,ρ,g,times,U_array,w_samples)
+W = calc_wignerfunction_resonator(ρ,g,times,U_array,w_samples)
 plot_wignerfunction(W)

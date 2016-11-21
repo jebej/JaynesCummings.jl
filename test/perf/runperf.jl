@@ -47,10 +47,10 @@ e_prob = calc_qubittimeevo(ρ,U_array)
 suite["calculation"]["photonnum"] = @benchmarkable calc_photonnumbers($N,$g,$times,$e_prob)
 
 # Density matrix calculation benchmark
-suite["calculation"]["densitymatrix"] = @benchmarkable calc_densitymatrix_resonator($N,$ρ,$g,$times,$U_array)
+suite["calculation"]["densitymatrix"] = @benchmarkable calc_densitymatrix_resonator($ρ,$g,$times,$U_array)
 
 # Wigner function calculation benchmark
-suite["calculation"]["wignerfunc"] = @benchmarkable calc_wignerfunction_resonator($N,$ρ,$g,$times,$U_array,$w_samples)
+suite["calculation"]["wignerfunc"] = @benchmarkable calc_wignerfunction_resonator($ρ,$g,$times,$U_array,$w_samples)
 
 tune!(suite)
 results = run(suite)

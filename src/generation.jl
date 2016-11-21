@@ -112,12 +112,9 @@ function gen_timeevoarray(H,t_f,samples)
 end
 
 
-function gen_displacementop(alpha,N)
-    # Generates the displacement operator for a qubit and resonator system
-    # (only displaces the resonator, the identity is tensored in for the
-    # qubit). We calculate the matrix exponential with twice the harmonic
-    # oscilator space for better accuracy.
-    expm( alpha * a_dagger(N) - alpha' * a(N) )
+function gen_displacementop(α,N)
+    # Generate the harmonic oscillator displacement operator
+    expm( α * a_dagger(N) - α' * a(N) )
 end
 
 

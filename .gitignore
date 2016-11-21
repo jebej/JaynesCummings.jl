@@ -2,6 +2,7 @@
 /tmp
 /test/output
 /test/perf/results
+.ipynb_checkpoints
 
 *.exe
 *.dll
