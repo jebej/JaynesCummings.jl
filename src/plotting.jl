@@ -2,8 +2,8 @@ function plot_qubittimeevo(time_vec,excited_prob)
     p = scatter(;x=time_vec*1E9,y=excited_prob,mode="line")
 
     l = Layout(;title="Qubit Excited State Probability",
-    xaxis=attr(title="Interaction Time (ns)", showgrid=false, zeroline=false),
-    yaxis=attr(title="Excited Probability"))
+    xaxis=attr(title="Time (ns)", showgrid=false, zeroline=false),
+    yaxis=attr(title="Excited Probability", range=[0.0, 1.0]))
 
     plot(p,l)
 end
@@ -23,7 +23,7 @@ end
 function plot_densitymatrix(densitymatrix)
     kets = 0
     for m = size(densitymatrix,1):-1:1
-        if sum(abs(densitymatrix[m,:]))>0.00001
+        if sum(abs(densitymatrix[m,:]))>0.0001
             kets = collect(0:m-1)
             break
         end

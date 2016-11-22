@@ -53,9 +53,8 @@ function gen_initialstate(N,kets)
         state = state + ketCoeff[i]*ketCoeff[j]'*ket*bra
     end
 
-    norm = 1/sum(abs(ketCoeff[:]).^2)
-    state = norm*state # Norming
-    return state
+    # Return normalized state
+    return state/sum(abs(ketCoeff[:]).^2)
 end
 
 
