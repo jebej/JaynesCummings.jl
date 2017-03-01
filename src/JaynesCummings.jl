@@ -1,7 +1,11 @@
 module JaynesCummings
-using LsqFit, PlotlyJS
+using Compat
 
-import Base.product
+if VERSION < v"0.5.0"
+    product(x,y) = reshape(collect(Compat.Iterators.product(x,y)),length(x),length(y))
+else
+    import Base.product
+end
 
 export
 gen_initialstate, gen_hamiltonian, gen_displacementop, gen_timeevoarray,
@@ -16,9 +20,10 @@ partialtrace,
 include("constants.jl")
 include("generation.jl")
 include("calculation.jl")
-include("plotting.jl")
 
 
+load_plotfuns() = include(joinpath(dirname(@__FILE__),"plotting.jl"))
 runtests() = include(joinpath(dirname(dirname(@__FILE__)),"test","runtests.jl"))
+runperf() = include(joinpath(dirname(dirname(@__FILE__)),"test","perf","runperf.jl"))
 
 end

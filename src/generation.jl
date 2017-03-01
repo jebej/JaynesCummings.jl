@@ -54,7 +54,7 @@ function gen_initialstate(N,kets)
     end
 
     # Return normalized state
-    return state/sum(abs(ketCoeff[:]).^2)
+    @compat return state/sum(abs.(ketCoeff).^2)
 end
 
 

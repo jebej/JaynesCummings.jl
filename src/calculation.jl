@@ -94,20 +94,15 @@ function calc_qubittimeevo_rel(ρ,U_rel_array,steps,decimation=10)
 end
 
 
-function excited_model(x,p,N,g)
-    # Fit function (resonator state only)
-    a = zeros(Float64,length(x))
-    for n=(1:N)
-        a += p[n]*cos(2*sqrt(n-1)*g*x)
-    end
-    return 0.5*(1.0-a)
-end
-
-
 function calc_photonnumbers(N,g,times,e_prob)
-    fun(x,p) = excited_model(x,p,N,g)
-    fit = curve_fit(fun,times,e_prob,ones(Float64,N)*0.1)
-    return fit.param
+    M = length(times)
+    B = Array{Float64}(M,N)
+    @compat B[:,1] .= 1.0
+    for n = 2:N
+        f = 2*sqrt(n-1)*g
+        @compat B[:,n] .= cos.(f.*times)
+    end
+    return B\(1-2*e_prob)
 end
 
 

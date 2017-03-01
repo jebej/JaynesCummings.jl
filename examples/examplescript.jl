@@ -1,5 +1,6 @@
-addprocs(4)
-using JaynesCummings
+#addprocs(4)
+using JaynesCummings, PlotlyJS
+JaynesCummings.load_plotfuns()
 
 N = 16  # N should be larger than the highest resonator initial state
 ω_q = 2π*6.57E9
