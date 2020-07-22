@@ -14,7 +14,7 @@ calc_qubittimeevo, calc_qubittimeevo_rel, calc_photonnumbers,
 calc_densitymatrix_resonator, calc_wignerfunction_resonator,
 plot_qubittimeevo, plot_photonnumbers, plot_densitymatrix, plot_wignerfunction,
 plot_wignerfunction3d,
-partialtrace,
+ptrace,
 ħ, a, a_dagger, σ_minus, σ_plus, σ_z, qeye, ⊗
 
 include("constants.jl")

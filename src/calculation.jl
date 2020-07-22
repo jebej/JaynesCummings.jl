@@ -2,11 +2,11 @@ import Base.reverse
 reverse(n::Number) = n
 
 """
-    partialtrace(ρ,dims,sys)
+    ptrace(ρ,dims,sys)
 
 Compute the partial trace of a matrix ρ with subsystems dimensions specified in
-the vector sys_dims (e.g.: [dimA dimB...]) by tracing out the subsystems given
-in the vector sys (e.g.: [2 3]).
+the vector sys_dims (e.g.: [dimA,dimB...]) by tracing out the subsystems given
+in the vector sys (e.g.: [2,3]).
 
 Function adapted from a MATLAB function by Toby Cubitt available here:
 http://www.dr-qubit.org/Matlab_code.html and licensed under GPL2.
@@ -22,15 +22,15 @@ http://www.dr-qubit.org/Matlab_code.html and licensed under GPL2.
 # Examples
 ```jldoctest
 julia> ρ = [0.5 0 0 0.5; 0 0 0 0; 0 0 0 0; 0.5 0 0 0.5]
-julia> dims = [2;2] # two qubits
+julia> dims = [2,2] # two qubits
 julia> sys = 1 # trace out the first qubit
-julia> partialtrace(ρ,dims,sys)
+julia> ptrace(ρ,dims,sys)
 2×2 Array{Float64,2}:
  0.5  0.0
  0.0  0.5
 ```
 """
-function partialtrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
+function ptrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
     # Make sure the input arguments make sense
     if any(sys.>length(dims))
         error("You have given a system index too high for the dimensions specified in `dims`")
@@ -39,21 +39,18 @@ function partialtrace(ρ::Matrix,dims::Vector{Int},sys::Union{Vector{Int},Int})
         error("The subsystem dimensions given in `dims` are not consistent with those of the matrix")
     end
     # First, calculate systems, dimensions, etc.
-    n = length(dims)
-    rdims = reverse(dims)
-    keep = 1:n
-    flag = trues(size(keep))
-    flag[sys] = false
-    keep = keep[flag]
-    dimstrace = prod(dims[sys])
-    dimskeep = div(size(ρ,1),dimstrace)
+    nsub = length(dims) # Number of subsytems in ρ
+    rdims = reverse(dims) # Dimensions of subsystems in reverse order
+    keep = setdiff(1:nsub,sys) # Subsystems to keep
+    dimstrace = prod(dims[sys]) # Total dim of subsystems to trace out
+    dimskeep = prod(dims[keep]) # Total dim of subsystems to keep
     # Reshape density matrix into tensor with one row and one column index
     # for each subsystem, permute traced subsystem indices to the end,
     # reshape again so that first two indices are row and column
     # multi-indices for kept subsystems and third index is a flattened index
     # for traced subsystems, then sum third index over "diagonal" entries
-    perm = n+1-[reverse(keep);reverse(keep)-n;sys;sys-n]
-    x = reshape(permutedims(reshape(ρ,[rdims;rdims]...),perm),dimskeep,dimskeep,dimstrace^2)
+    perm = nsub+1-[reverse(keep);reverse(keep)-nsub;sys;sys-nsub]
+    x = reshape(permutedims(reshape(ρ,rdims...,rdims...),perm),dimskeep,dimskeep,dimstrace^2)
     return sum(x[:,:,1:dimstrace+1:dimstrace^2],3)[:,:,1]
 end
 
@@ -64,7 +61,7 @@ function calc_qubittimeevo(ρ,U_array)
     # tracing out the resonator system and keeping the excited states entry.
     N = div(size(ρ,1),2)
     map(U_array) do U
-        real(partialtrace(U*ρ*U',[2,N],2)[2,2])
+        real(ptrace(U*ρ*U',[2,N],2)[2,2])
     end
 end
 
@@ -83,10 +80,10 @@ function calc_qubittimeevo_rel(ρ,U_rel_array,steps,decimation=10)
     j = 1
     for i = 1:steps
         # Note the use of the modulo operation to apply U in cycles
-        ρ_evo = U_rel_array[(i-1)%c+1]*ρ_evo*U_rel_array[(i-1)%c+1]'
+        ρ_evo = U_rel_array[mod1(i,c)]*ρ_evo*U_rel_array[mod1(i,c)]'
         if (i-1)%decimation==0
-            e_prob[j] = real(partialtrace(ρ_evo,[2,N],2)[2,2])
-            #n_expect[j] = (nvec'*real(diag(partialtrace(ρ_evo,[2,N],1))))[1]
+            e_prob[j] = real(ptrace(ρ_evo,[2,N],2)[2,2])
+            #n_expect[j] = (nvec'*real(diag(ptrace(ρ_evo,[2,N],1))))[1]
             j += 1
         end
     end
@@ -193,7 +190,7 @@ function cal_densitymatrix_qubit(xup,yup,zup)
 end
 
 
-function partialtrace_old(rho,dimOfSubsystemToKeep)
+function ptrace_old(rho,dimOfSubsystemToKeep)
     # First check if the density matrix is Hermitian
     if maximum(abs(rho'-rho))>8E-15
         error("This density matrix is not Hermitian!")

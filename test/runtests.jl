@@ -53,7 +53,7 @@ photons = calc_photonnumbers(N,g,times,e_prob)
 @test photons ≈ good_photons
 
 ρ_resonator = calc_densitymatrix_resonator(ρ,g,times,U_array)
-@test ρ_resonator ≈ partialtrace(ρ,[2,N],1)
+@test ρ_resonator ≈ ptrace(ρ,[2,N],1)
 
 W = calc_wignerfunction_resonator(ρ,g,times,U_array,w_samples)
 @test W ≈ calc_wignerfunction_resonator(ρ_resonator,w_samples)
